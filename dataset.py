@@ -4,6 +4,24 @@ import gcp
 
 
 class QuickDrawDataset:
+    _categories = None
+
+    @staticmethod
+    def categories():
+        """Get labels for the quickdraw dataset"""
+        if QuickDrawDataset._categories:
+            return QuickDrawDataset._categories
+
+        filename = "categories.txt"
+
+        with open(filename, "r", encoding="utf-8") as file:
+            # each line is a category
+            categories = [line.strip() for line in file]
+
+        # cache categories so we don't have to read file again
+        QuickDrawDataset._categories = categories
+        return categories
+
     def __init__(self, root: str, train: bool = True, download: bool = False):
         print(f"[quickdraw dataset: root={root}, train={train}, download={download}]")
 
