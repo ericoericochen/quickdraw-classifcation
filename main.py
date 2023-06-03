@@ -2,12 +2,10 @@
 import dataset
 
 if __name__ == "__main__":
-    # train_set = dataset.QuickDrawDataset(root="/data", train=True, download=False)
+    train_set = dataset.QuickDrawDataset(root="/data", train=True, download=True)
 
-    # train_points = train_set.get()
+    print(train_set)
 
-    # print(train_points)
+    # labels = dataset.QuickDrawDataset.categories()
 
-    labels = dataset.QuickDrawDataset.categories()
-
-    print(labels)
+    # print(labels)
