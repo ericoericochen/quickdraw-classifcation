@@ -34,12 +34,23 @@ class QuickDrawDataset(Dataset):
         self._random = np.random.default_rng(5)
         if download:
             self._dataset = self._download_dataset()
+            print(self._dataset[0].shape, self._dataset[1].shape)
+        else:
+            self._dataset = self._load_dataset()
+
+    def _size_per_label(self):
+        return 100 if self._train else 10
+
+    def _size(self, categories):
+        return len(categories) * self._size_per_label()
 
     def _download_dataset(self):
         """
         Donwload dataset and returns a tuple (features, labels)
         """
-        categories = ["aircraft carrier", "airplane"]
+        # categories = ["aircraft carrier", "airplane"]
+        categories = QuickDrawDataset.categories()
+        dataset_size = self._size(categories)
 
         # dataset location
         dataset_path = self._dataset_path(self._root, self._train)
@@ -48,16 +59,21 @@ class QuickDrawDataset(Dataset):
         os.makedirs(dataset_path, exist_ok=True)
 
         # collect all features and labels
+        curr_count = 0
         drawings = []
         labels = []
 
+        size = self._size_per_label()
         for i, category in enumerate(categories):
             xs, ys = self._load_from_category(
-                category=category, label=i, to=dataset_path, size=10
+                category=category, label=i, to=dataset_path, size=size
             )
 
             drawings.append(xs)
             labels.append(ys)
+
+            curr_count += len(xs)
+            print(f"[{curr_count}/{dataset_size} downloaded]")
 
         # concenate results from each category
         drawings = np.concatenate(drawings)
@@ -65,10 +81,6 @@ class QuickDrawDataset(Dataset):
         labels = np.concatenate(labels)
 
         # save in .npy files
-        print(drawings, labels)
-        print(drawings.shape)
-        print(labels.shape)
-
         drawings_path = os.path.join(dataset_path, "drawings.npy")
         labels_path = os.path.join(dataset_path, "labels.npy")
 
@@ -81,11 +93,21 @@ class QuickDrawDataset(Dataset):
 
         return drawings, labels
 
-    def _load_dataset(self, path):
+    def _load_dataset(self):
         """
         Load pre-downloaded dataset from path
         """
-        pass
+        dataset_path = self._dataset_path(self._root, self._train)
+        drawings_path = os.path.join(dataset_path, "drawings.npy")
+        labels_path = os.path.join(dataset_path, "labels.npy")
+
+        drawings: np.ndarray = np.load(drawings_path)
+        labels: np.ndarray = np.load(labels_path)
+
+        drawings = torch.from_numpy(drawings)
+        labels = torch.from_numpy(labels)
+
+        return drawings, labels
 
     def _dataset_path(self, root, train=False):
         root = root.lstrip("/")
@@ -128,7 +150,7 @@ class QuickDrawDataset(Dataset):
         return features, labels
 
     def __len__(self):
-        return 5
+        return len(self._dataset[0])
 
     def __getitem__(self, index):
-        return 5, 5
+        return self._dataset[0][index], self._dataset[1][index]
