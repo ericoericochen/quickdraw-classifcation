@@ -38,6 +38,9 @@ class QuickDrawDataset(Dataset):
         else:
             self._dataset = self._load_dataset()
 
+        # normalize dataset -> divide by 255
+        self._dataset[0] /= 255
+
     def _size_per_label(self):
         return 100 if self._train else 10
 
@@ -88,10 +91,10 @@ class QuickDrawDataset(Dataset):
         np.save(labels_path, labels)
 
         # convert to tensor
-        drawings = torch.from_numpy(drawings)
+        drawings = torch.from_numpy(drawings).type(torch.float)
         labels = torch.from_numpy(labels)
 
-        return drawings, labels
+        return [drawings, labels]
 
     def _load_dataset(self):
         """
@@ -104,10 +107,10 @@ class QuickDrawDataset(Dataset):
         drawings: np.ndarray = np.load(drawings_path)
         labels: np.ndarray = np.load(labels_path)
 
-        drawings = torch.from_numpy(drawings)
+        drawings = torch.from_numpy(drawings).type(torch.float)
         labels = torch.from_numpy(labels)
 
-        return drawings, labels
+        return [drawings, labels]
 
     def _dataset_path(self, root, train=False):
         root = root.lstrip("/")

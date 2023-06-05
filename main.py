@@ -3,7 +3,7 @@ import dataset
 import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
-    train_set = dataset.QuickDrawDataset(root="/data", train=False, download=True)
+    train_set = dataset.QuickDrawDataset(root="/data", train=True, download=False)
 
     print(train_set)
 
