@@ -90,6 +90,8 @@ class QuickDrawDataset(Dataset):
         np.save(drawings_path, drawings)
         np.save(labels_path, labels)
 
+        drawings = np.expand_dims(drawings, axis=1)
+
         # convert to tensor
         drawings = torch.from_numpy(drawings).type(torch.float)
         labels = torch.from_numpy(labels)
@@ -105,6 +107,9 @@ class QuickDrawDataset(Dataset):
         labels_path = os.path.join(dataset_path, "labels.npy")
 
         drawings: np.ndarray = np.load(drawings_path)
+
+        # add 1 channel
+        drawings = np.expand_dims(drawings, axis=1)
         labels: np.ndarray = np.load(labels_path)
 
         drawings = torch.from_numpy(drawings).type(torch.float)
