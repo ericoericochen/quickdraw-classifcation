@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, random_split
 import gcp
 
 
@@ -9,7 +9,7 @@ class QuickDrawDataset(Dataset):
     _categories = None
 
     @staticmethod
-    def categories():
+    def categories() -> list[str]:
         """Get labels for the quickdraw dataset"""
         if QuickDrawDataset._categories:
             return QuickDrawDataset._categories
@@ -24,14 +24,15 @@ class QuickDrawDataset(Dataset):
         QuickDrawDataset._categories = categories
         return categories
 
-    def __init__(self, root: str, train: bool = True, download: bool = False):
-        print(f"[quickdraw dataset: root={root}, train={train}, download={download}]")
+    def __init__(self, root: str, download: bool = False):
+        print(f"[quickdraw dataset: root={root}, download={download}]")
 
         self._root = root
-        self._train = train
         self._bucket_name = "quickdraw_dataset"
         self._source_blob_prefix = "full/numpy_bitmap"
         self._random = np.random.default_rng(5)
+        self._size_per_category = 1000
+
         if download:
             self._dataset = self._download_dataset()
             print(self._dataset[0].shape, self._dataset[1].shape)
@@ -41,22 +42,21 @@ class QuickDrawDataset(Dataset):
         # normalize dataset -> divide by 255
         self._dataset[0] /= 255
 
-    def _size_per_label(self):
-        return 100 if self._train else 10
-
-    def _size(self, categories):
-        return len(categories) * self._size_per_label()
+    def _size(self, categories: list[str]) -> int:
+        """
+        Returns size of dataset
+        """
+        return len(categories) * self._size_per_category
 
     def _download_dataset(self):
         """
         Donwload dataset and returns a tuple (features, labels)
         """
-        # categories = ["aircraft carrier", "airplane"]
         categories = QuickDrawDataset.categories()
         dataset_size = self._size(categories)
 
         # dataset location
-        dataset_path = self._dataset_path(self._root, self._train)
+        dataset_path = self._dataset_path(self._root)
 
         # create dataset folder
         os.makedirs(dataset_path, exist_ok=True)
@@ -66,7 +66,7 @@ class QuickDrawDataset(Dataset):
         drawings = []
         labels = []
 
-        size = self._size_per_label()
+        size = self._size_per_category
         for i, category in enumerate(categories):
             xs, ys = self._load_from_category(
                 category=category, label=i, to=dataset_path, size=size
@@ -102,7 +102,7 @@ class QuickDrawDataset(Dataset):
         """
         Load pre-downloaded dataset from path
         """
-        dataset_path = self._dataset_path(self._root, self._train)
+        dataset_path = self._dataset_path(self._root)
         drawings_path = os.path.join(dataset_path, "drawings.npy")
         labels_path = os.path.join(dataset_path, "labels.npy")
 
@@ -117,12 +117,10 @@ class QuickDrawDataset(Dataset):
 
         return [drawings, labels]
 
-    def _dataset_path(self, root, train=False):
+    def _dataset_path(self, root):
         root = root.lstrip("/")
-        dataset_dir = "train" if train else "test"
-        dataset_path = os.path.join(root, dataset_dir)
 
-        return dataset_path
+        return root
 
     def _load_from_category(self, category, label, to, size):
         """
@@ -162,3 +160,10 @@ class QuickDrawDataset(Dataset):
 
     def __getitem__(self, index):
         return self._dataset[0][index], self._dataset[1][index]
+
+
+def split(dataset: Dataset):
+    """
+    Split a dataset into train, validation, and test (80/10/10 split)
+    """
+    return random_split(dataset, lengths=[0.8, 0.1, 0.1])

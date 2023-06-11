@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 if __name__ == "__main__":
-    train_set = dataset.QuickDrawDataset(root="/data", train=True, download=False)
+    train_set = dataset.QuickDrawDataset(root="/data_", download=True)
 
     print(train_set)
 
