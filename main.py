@@ -1,6 +1,7 @@
 # file to test code
 import dataset
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 if __name__ == "__main__":
     train_set = dataset.QuickDrawDataset(root="/data", train=True, download=False)
